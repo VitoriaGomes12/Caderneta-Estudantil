@@ -25,7 +25,8 @@ export default function Estudantes() {
   }, [q, turma]);
 
   async function apagar(estudante) {
-    if (!window.confirm(`Apagar o estudante ${estudante.nome}?`)) return;
+    const aviso = `Apagar o estudante ${estudante.nome}? As ocorrências dele também serão apagadas.`;
+    if (!window.confirm(aviso)) return;
     try {
       await api.delete(`/estudantes/${estudante.id}`);
       carregar();
@@ -77,13 +78,14 @@ export default function Estudantes() {
                 <th>Nome</th>
                 <th>Turma</th>
                 <th>Contacto</th>
+                <th>Ocorrências</th>
                 <th className="text-end">Acções</th>
               </tr>
             </thead>
             <tbody>
               {estudantes.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center text-muted py-4">
+                  <td colSpan="6" className="text-center text-muted py-4">
                     Nenhum estudante encontrado.
                   </td>
                 </tr>
@@ -91,10 +93,38 @@ export default function Estudantes() {
               {estudantes.map((e) => (
                 <tr key={e.id}>
                   <td>{e.numero_processo}</td>
-                  <td>{e.nome}</td>
+                  <td>
+                    <Link
+                      to={`/estudantes/${e.id}`}
+                      className="text-decoration-none fw-semibold"
+                    >
+                      {e.nome}
+                    </Link>
+                  </td>
                   <td>{e.turma}</td>
                   <td>{e.contacto}</td>
-                  <td className="text-end">
+                  <td className="text-nowrap">
+                    <Link
+                      to={`/estudantes/${e.id}`}
+                      className="text-decoration-none"
+                    >
+                      {e.total_ocorrencias > 0 ? (
+                        <>
+                          <span className="badge bg-secondary me-1">
+                            {e.total_ocorrencias}
+                          </span>
+                          {e.total_graves > 0 && (
+                            <span className="badge bg-danger">
+                              {e.total_graves} grave(s)
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted">Sem ocorrências</span>
+                      )}
+                    </Link>
+                  </td>
+                  <td className="text-end text-nowrap">
                     <Link
                       to={`/estudantes/${e.id}/editar`}
                       className="btn btn-sm btn-outline-secondary me-2"

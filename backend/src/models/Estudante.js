@@ -2,22 +2,27 @@ const db = require('../config/database');
 
 const Estudante = {
   listar({ q, turma } = {}) {
-    let sql = 'SELECT * FROM estudante WHERE 1=1';
-    const params = [];
+  let sql = `SELECT e.*,
+    (SELECT COUNT(*) FROM ocorrencia o
+      WHERE o.estudante_id = e.id) AS total_ocorrencias,
+    (SELECT COUNT(*) FROM ocorrencia o
+      WHERE o.estudante_id = e.id AND o.gravidade = 'grave') AS total_graves
+    FROM estudante e WHERE 1=1`;
+  const params = [];
 
-    if (q) {
-      sql += ' AND (nome LIKE ? OR numero_processo LIKE ? OR bi LIKE ?)';
-      const like = `%${q}%`;
-      params.push(like, like, like);
-    }
-    if (turma) {
-      sql += ' AND turma = ?';
-      params.push(turma);
-    }
+  if (q) {
+    sql += ' AND (nome LIKE ? OR numero_processo LIKE ? OR bi LIKE ?)';
+    const like = `%${q}%`;
+    params.push(like, like, like);
+  }
+  if (turma) {
+    sql += ' AND turma = ?';
+    params.push(turma);
+  }
 
-    sql += ' ORDER BY nome COLLATE NOCASE';
-    return db.prepare(sql).all(...params);
-  },
+  sql += ' ORDER BY nome COLLATE NOCASE';
+  return db.prepare(sql).all(...params);
+},
 
   turmas() {
     return db

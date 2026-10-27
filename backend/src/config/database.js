@@ -28,6 +28,17 @@ db.exec(`
     turma TEXT,
     criado_em TEXT DEFAULT (datetime('now'))
   );
+
+  CREATE TABLE IF NOT EXISTS ocorrencia (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    estudante_id INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    gravidade TEXT NOT NULL CHECK (gravidade IN ('leve', 'media', 'grave')),
+    descricao TEXT,
+    criado_em TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (estudante_id) REFERENCES estudante(id) ON DELETE CASCADE
+  );
 `);
 
 // Cria o professor na primeira execução
