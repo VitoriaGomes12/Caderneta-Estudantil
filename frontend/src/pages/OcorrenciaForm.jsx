@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { TIPOS, GRAVIDADES } from '../constants';
 
 // Data de hoje no formato AAAA-MM-DD, na hora local
@@ -9,6 +10,7 @@ const hoje = () => new Date().toLocaleDateString('en-CA');
 export default function OcorrenciaForm() {
   const { estudanteId, id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [form, setForm] = useState({
     data: hoje(),
@@ -53,17 +55,25 @@ export default function OcorrenciaForm() {
 
   async function enviar(e) {
     e.preventDefault();
+
+    if (form.data > hoje()) {
+      setErro('A data da ocorrência não pode estar no futuro.');
+      return;
+    }
+
     setErro('');
     setAGuardar(true);
     try {
       if (id) {
         await api.put(`/ocorrencias/${id}`, form);
+        toast.sucesso('Ocorrência actualizada.');
       } else {
         await api.post(`/estudantes/${estudanteId}/ocorrencias`, form);
+        toast.sucesso('Ocorrência registada.');
       }
       navigate(`/estudantes/${idEstudante}`);
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao guardar.');
+      setErro(err.response?.data?.erro || 'Não foi possível guardar.');
     } finally {
       setAGuardar(false);
     }
@@ -71,36 +81,49 @@ export default function OcorrenciaForm() {
 
   return (
     <>
-      <h3 className="mb-1">{id ? 'Editar ocorrência' : 'Nova ocorrência'}</h3>
-      {nomeEstudante && <p className="text-muted">Estudante: {nomeEstudante}</p>}
+      <div className="page-head">
+        <div>
+          <h1>{id ? 'Editar ocorrência' : 'Nova ocorrência'}</h1>
+          {nomeEstudante && <p>Estudante: {nomeEstudante}</p>}
+        </div>
+      </div>
 
       {erro && <div className="alert alert-danger">{erro}</div>}
 
-      <form onSubmit={enviar} className="card shadow-sm">
-        <div className="card-body">
+      <form onSubmit={enviar} className="painel">
+        <div className="painel-corpo">
           <div className="row g-3">
             <div className="col-md-4">
-              <label className="form-label">Data *</label>
+              <label className="form-label" htmlFor="data">Data *</label>
               <input
+                id="data"
                 type="date"
                 className="form-control"
                 name="data"
+                max={hoje()}
                 value={form.data}
                 onChange={alterar}
                 required
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label">Tipo *</label>
-              <select className="form-select" name="tipo" value={form.tipo} onChange={alterar}>
+              <label className="form-label" htmlFor="tipo">Tipo *</label>
+              <select
+                id="tipo"
+                className="form-select"
+                name="tipo"
+                value={form.tipo}
+                onChange={alterar}
+              >
                 {TIPOS.map((t) => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>
             </div>
             <div className="col-md-4">
-              <label className="form-label">Gravidade *</label>
+              <label className="form-label" htmlFor="gravidade">Gravidade *</label>
               <select
+                id="gravidade"
                 className="form-select"
                 name="gravidade"
                 value={form.gravidade}
@@ -112,18 +135,20 @@ export default function OcorrenciaForm() {
               </select>
             </div>
             <div className="col-12">
-              <label className="form-label">Descrição</label>
+              <label className="form-label" htmlFor="descricao">Descrição</label>
               <textarea
+                id="descricao"
                 className="form-control"
                 name="descricao"
                 rows="4"
+                maxLength="1000"
                 value={form.descricao}
                 onChange={alterar}
               />
             </div>
           </div>
         </div>
-        <div className="card-footer d-flex justify-content-end gap-2">
+        <div className="painel-cabeca justify-content-end border-top border-bottom-0">
           <Link
             to={idEstudante ? `/estudantes/${idEstudante}` : '/estudantes'}
             className="btn btn-outline-secondary"
@@ -131,7 +156,7 @@ export default function OcorrenciaForm() {
             Cancelar
           </Link>
           <button className="btn btn-primary" disabled={aGuardar}>
-            {aGuardar ? 'A guardar...' : 'Guardar'}
+            {aGuardar ? 'A guardar...' : 'Guardar ocorrência'}
           </button>
         </div>
       </form>

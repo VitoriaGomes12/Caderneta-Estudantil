@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Navbar from './Navbar';
+import Sidebar from './Sidebar';
 
 export default function PrivateRoute() {
   const { token } = useAuth();
@@ -8,11 +8,13 @@ export default function PrivateRoute() {
   if (!token) return <Navigate to="/login" replace />;
 
   return (
-    <>
-      <Navbar />
-      <div className="container py-4">
-        <Outlet />
-      </div>
-    </>
+    <div className="app-shell">
+      <Sidebar />
+      <main className="app-main">
+        <div className="app-content">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   );
 }

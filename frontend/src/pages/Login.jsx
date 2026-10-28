@@ -16,47 +16,53 @@ export default function Login() {
     setAEntrar(true);
     try {
       await login(username, password);
-      navigate('/estudantes');
+      navigate('/painel');
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Não foi possível entrar.');
+      setErro(err.response?.data?.erro || 'Não foi possível entrar. Verifica a ligação ao servidor.');
     } finally {
       setAEntrar(false);
     }
   }
 
   return (
-    <div className="container" style={{ maxWidth: 400, marginTop: '15vh' }}>
-      <div className="card shadow-sm">
-        <div className="card-body p-4">
-          <h4 className="mb-4 text-center">Sistema de Estudantes</h4>
+    <div className="login-pagina">
+      <section className="login-capa">
+        <span className="brand-mark" />
+        <h1>Caderneta estudantil</h1>
+        <p>Os dados dos estudantes e o registo de ocorrências, num só lugar.</p>
+      </section>
+
+      <section className="login-form-area">
+        <form className="login-form" onSubmit={enviar}>
+          <h2>Entrar</h2>
 
           {erro && <div className="alert alert-danger">{erro}</div>}
 
-          <form onSubmit={enviar}>
-            <div className="mb-3">
-              <label className="form-label">Utilizador</label>
-              <input
-                className="form-control"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Palavra-passe</label>
-              <input
-                type="password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <button className="btn btn-primary w-100" disabled={aEntrar}>
-              {aEntrar ? 'A entrar...' : 'Entrar'}
-            </button>
-          </form>
-        </div>
-      </div>
+          <div className="mb-3">
+            <label className="form-label" htmlFor="utilizador">Utilizador</label>
+            <input
+              id="utilizador"
+              className="form-control"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div className="mb-4">
+            <label className="form-label" htmlFor="palavra-passe">Palavra-passe</label>
+            <input
+              id="palavra-passe"
+              type="password"
+              className="form-control"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <button className="btn btn-primary w-100" disabled={aEntrar}>
+            {aEntrar ? 'A entrar...' : 'Entrar'}
+          </button>
+        </form>
+      </section>
     </div>
   );
 }

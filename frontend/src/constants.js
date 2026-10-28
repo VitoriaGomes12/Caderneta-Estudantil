@@ -9,9 +9,9 @@ export const TIPOS = [
 ];
 
 export const GRAVIDADES = [
-  { valor: 'leve', rotulo: 'Leve', classe: 'bg-success' },
-  { valor: 'media', rotulo: 'Média', classe: 'bg-warning text-dark' },
-  { valor: 'grave', rotulo: 'Grave', classe: 'bg-danger' },
+  { valor: 'leve', rotulo: 'Leve', classe: 'tag tag-leve' },
+  { valor: 'media', rotulo: 'Média', classe: 'tag tag-media' },
+  { valor: 'grave', rotulo: 'Grave', classe: 'tag tag-grave' },
 ];
 
 export function dadosGravidade(valor) {

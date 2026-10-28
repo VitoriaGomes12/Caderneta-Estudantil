@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
+
+function iniciais(nome) {
+  const partes = nome.trim().split(/\s+/);
+  const primeira = partes[0][0];
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
+  return (primeira + ultima).toUpperCase();
+}
 
 export default function Estudantes() {
+  const toast = useToast();
   const [estudantes, setEstudantes] = useState([]);
   const [turmas, setTurmas] = useState([]);
   const [q, setQ] = useState('');
   const [turma, setTurma] = useState('');
   const [erro, setErro] = useState('');
+  const [carregado, setCarregado] = useState(false);
 
   async function carregar() {
     try {
@@ -15,8 +25,11 @@ export default function Estudantes() {
       setEstudantes(data);
       const resp = await api.get('/estudantes/turmas');
       setTurmas(resp.data);
+      setErro('');
     } catch {
-      setErro('Erro ao carregar os estudantes.');
+      setErro('Não foi possível carregar os estudantes.');
+    } finally {
+      setCarregado(true);
     }
   }
 
@@ -25,22 +38,31 @@ export default function Estudantes() {
   }, [q, turma]);
 
   async function apagar(estudante) {
-    const aviso = `Apagar o estudante ${estudante.nome}? As ocorrências dele também serão apagadas.`;
+    const aviso = `Apagar ${estudante.nome}? As ocorrências dele também serão apagadas.`;
     if (!window.confirm(aviso)) return;
     try {
       await api.delete(`/estudantes/${estudante.id}`);
+      toast.sucesso('Estudante apagado.');
       carregar();
     } catch {
-      setErro('Erro ao apagar o estudante.');
+      toast.erro('Não foi possível apagar o estudante.');
     }
   }
 
+  const semFiltros = !q && !turma;
+
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="mb-0">Estudantes</h3>
+      <div className="page-head">
+        <div>
+          <h1>Estudantes</h1>
+          <p>
+            {estudantes.length} {estudantes.length === 1 ? 'estudante' : 'estudantes'}
+            {!semFiltros && ' encontrados'}
+          </p>
+        </div>
         <Link to="/estudantes/novo" className="btn btn-primary">
-          + Novo estudante
+          Novo estudante
         </Link>
       </div>
 
@@ -50,7 +72,8 @@ export default function Estudantes() {
         <div className="col-md-8">
           <input
             className="form-control"
-            placeholder="Pesquisar por nome, nº de processo ou BI..."
+            placeholder="Pesquisar por nome, nº de processo ou BI"
+            aria-label="Pesquisar estudantes"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -58,6 +81,7 @@ export default function Estudantes() {
         <div className="col-md-4">
           <select
             className="form-select"
+            aria-label="Filtrar por turma"
             value={turma}
             onChange={(e) => setTurma(e.target.value)}
           >
@@ -69,53 +93,59 @@ export default function Estudantes() {
         </div>
       </div>
 
-      <div className="card shadow-sm">
+      <div className="painel">
         <div className="table-responsive">
-          <table className="table table-hover mb-0 align-middle">
-            <thead className="table-light">
+          <table className="tabela">
+            <thead>
               <tr>
-                <th>Nº Processo</th>
-                <th>Nome</th>
+                <th>Nº processo</th>
+                <th>Estudante</th>
                 <th>Turma</th>
                 <th>Contacto</th>
                 <th>Ocorrências</th>
-                <th className="text-end">Acções</th>
+                <th className="acoes">Acções</th>
               </tr>
             </thead>
             <tbody>
-              {estudantes.length === 0 && (
+              {carregado && estudantes.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="text-center text-muted py-4">
-                    Nenhum estudante encontrado.
+                  <td colSpan="6">
+                    <div className="vazio">
+                      {semFiltros ? (
+                        <>
+                          <strong>Ainda não há estudantes.</strong>
+                          Cadastra o primeiro para começar a registar ocorrências.
+                        </>
+                      ) : (
+                        <>
+                          <strong>Nenhum estudante encontrado.</strong>
+                          Tenta outro nome, nº de processo ou turma.
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )}
+
               {estudantes.map((e) => (
                 <tr key={e.id}>
-                  <td>{e.numero_processo}</td>
+                  <td className="text-nowrap">{e.numero_processo}</td>
                   <td>
-                    <Link
-                      to={`/estudantes/${e.id}`}
-                      className="text-decoration-none fw-semibold"
-                    >
-                      {e.nome}
+                    <Link to={`/estudantes/${e.id}`} className="aluno">
+                      <span className="avatar">{iniciais(e.nome)}</span>
+                      <span>{e.nome}</span>
                     </Link>
                   </td>
                   <td>{e.turma}</td>
-                  <td>{e.contacto}</td>
+                  <td className="text-nowrap">{e.contacto}</td>
                   <td className="text-nowrap">
-                    <Link
-                      to={`/estudantes/${e.id}`}
-                      className="text-decoration-none"
-                    >
+                    <Link to={`/estudantes/${e.id}`} className="ocorr-link">
                       {e.total_ocorrencias > 0 ? (
                         <>
-                          <span className="badge bg-secondary me-1">
-                            {e.total_ocorrencias}
-                          </span>
+                          <span className="contagem">{e.total_ocorrencias}</span>
                           {e.total_graves > 0 && (
-                            <span className="badge bg-danger">
-                              {e.total_graves} grave(s)
+                            <span className="tag tag-grave ms-2">
+                              {e.total_graves} {e.total_graves === 1 ? 'grave' : 'graves'}
                             </span>
                           )}
                         </>
@@ -124,7 +154,7 @@ export default function Estudantes() {
                       )}
                     </Link>
                   </td>
-                  <td className="text-end text-nowrap">
+                  <td className="acoes">
                     <Link
                       to={`/estudantes/${e.id}/editar`}
                       className="btn btn-sm btn-outline-secondary me-2"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 const vazio = {
   numero_processo: '',
@@ -12,9 +13,19 @@ const vazio = {
   turma: '',
 };
 
+function validar(f) {
+  if (f.nome.trim().length < 3) return 'O nome deve ter pelo menos 3 caracteres.';
+  if (!f.numero_processo.trim()) return 'Indica o nº de processo.';
+  if (f.data_nascimento && f.data_nascimento > new Date().toLocaleDateString('en-CA')) {
+    return 'A data de nascimento não pode estar no futuro.';
+  }
+  return null;
+}
+
 export default function EstudanteForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState(vazio);
   const [erro, setErro] = useState('');
   const [aGuardar, setAGuardar] = useState(false);
@@ -24,7 +35,6 @@ export default function EstudanteForm() {
     api
       .get(`/estudantes/${id}`)
       .then(({ data }) => {
-        // troca null por texto vazio para os inputs
         const dados = {};
         Object.keys(vazio).forEach((campo) => {
           dados[campo] = data[campo] ?? '';
@@ -40,17 +50,25 @@ export default function EstudanteForm() {
 
   async function enviar(e) {
     e.preventDefault();
+    const problema = validar(form);
+    if (problema) {
+      setErro(problema);
+      return;
+    }
+
     setErro('');
     setAGuardar(true);
     try {
       if (id) {
         await api.put(`/estudantes/${id}`, form);
+        toast.sucesso('Dados do estudante actualizados.');
       } else {
         await api.post('/estudantes', form);
+        toast.sucesso('Estudante cadastrado.');
       }
       navigate('/estudantes');
     } catch (err) {
-      setErro(err.response?.data?.erro || 'Erro ao guardar.');
+      setErro(err.response?.data?.erro || 'Não foi possível guardar.');
     } finally {
       setAGuardar(false);
     }
@@ -58,16 +76,22 @@ export default function EstudanteForm() {
 
   return (
     <>
-      <h3 className="mb-3">{id ? 'Editar estudante' : 'Novo estudante'}</h3>
+      <div className="page-head">
+        <div>
+          <h1>{id ? 'Editar estudante' : 'Novo estudante'}</h1>
+          <p>Os campos com * são obrigatórios.</p>
+        </div>
+      </div>
 
       {erro && <div className="alert alert-danger">{erro}</div>}
 
-      <form onSubmit={enviar} className="card shadow-sm">
-        <div className="card-body">
+      <form onSubmit={enviar} className="painel">
+        <div className="painel-corpo">
           <div className="row g-3">
             <div className="col-md-4">
-              <label className="form-label">Nº de processo *</label>
+              <label className="form-label" htmlFor="numero_processo">Nº de processo *</label>
               <input
+                id="numero_processo"
                 className="form-control"
                 name="numero_processo"
                 value={form.numero_processo}
@@ -76,8 +100,9 @@ export default function EstudanteForm() {
               />
             </div>
             <div className="col-md-8">
-              <label className="form-label">Nome completo *</label>
+              <label className="form-label" htmlFor="nome">Nome completo *</label>
               <input
+                id="nome"
                 className="form-control"
                 name="nome"
                 value={form.nome}
@@ -86,17 +111,13 @@ export default function EstudanteForm() {
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label">BI</label>
-              <input
-                className="form-control"
-                name="bi"
-                value={form.bi}
-                onChange={alterar}
-              />
+              <label className="form-label" htmlFor="bi">BI</label>
+              <input id="bi" className="form-control" name="bi" value={form.bi} onChange={alterar} />
             </div>
             <div className="col-md-4">
-              <label className="form-label">Data de nascimento</label>
+              <label className="form-label" htmlFor="data_nascimento">Data de nascimento</label>
               <input
+                id="data_nascimento"
                 type="date"
                 className="form-control"
                 name="data_nascimento"
@@ -105,8 +126,9 @@ export default function EstudanteForm() {
               />
             </div>
             <div className="col-md-4">
-              <label className="form-label">Turma</label>
+              <label className="form-label" htmlFor="turma">Turma</label>
               <input
+                id="turma"
                 className="form-control"
                 name="turma"
                 value={form.turma}
@@ -114,8 +136,9 @@ export default function EstudanteForm() {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label">Contacto</label>
+              <label className="form-label" htmlFor="contacto">Contacto</label>
               <input
+                id="contacto"
                 className="form-control"
                 name="contacto"
                 value={form.contacto}
@@ -123,8 +146,9 @@ export default function EstudanteForm() {
               />
             </div>
             <div className="col-md-6">
-              <label className="form-label">Encarregado de educação</label>
+              <label className="form-label" htmlFor="encarregado">Encarregado de educação</label>
               <input
+                id="encarregado"
                 className="form-control"
                 name="encarregado"
                 value={form.encarregado}
@@ -133,12 +157,10 @@ export default function EstudanteForm() {
             </div>
           </div>
         </div>
-        <div className="card-footer d-flex justify-content-end gap-2">
-          <Link to="/estudantes" className="btn btn-outline-secondary">
-            Cancelar
-          </Link>
+        <div className="painel-cabeca justify-content-end border-top border-bottom-0">
+          <Link to="/estudantes" className="btn btn-outline-secondary">Cancelar</Link>
           <button className="btn btn-primary" disabled={aGuardar}>
-            {aGuardar ? 'A guardar...' : 'Guardar'}
+            {aGuardar ? 'A guardar...' : 'Guardar estudante'}
           </button>
         </div>
       </form>

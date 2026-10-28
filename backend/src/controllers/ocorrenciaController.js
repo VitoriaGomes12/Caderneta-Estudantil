@@ -24,6 +24,12 @@ function validar(d) {
   if (!GRAVIDADES.includes(d.gravidade)) {
     return 'Gravidade inválida.';
   }
+  if (d.data > new Date().toLocaleDateString('en-CA')) {
+    return 'A data da ocorrência não pode estar no futuro.';
+  }
+  if (d.descricao && d.descricao.length > 1000) {
+    return 'A descrição pode ter no máximo 1000 caracteres.';
+  }
   return null;
 }
 

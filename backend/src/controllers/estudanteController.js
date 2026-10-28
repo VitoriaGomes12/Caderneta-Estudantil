@@ -18,6 +18,28 @@ function limpar(body) {
   };
 }
 
+function validar(d) {
+  if (!d.nome || !d.numero_processo) {
+    return 'Nome e nº de processo são obrigatórios.';
+  }
+  if (d.nome.length < 3) {
+    return 'O nome deve ter pelo menos 3 caracteres.';
+  }
+  if (d.data_nascimento) {
+    const nascimento = new Date(d.data_nascimento);
+    if (Number.isNaN(nascimento.getTime())) {
+      return 'Data de nascimento inválida.';
+    }
+    if (nascimento > new Date()) {
+      return 'A data de nascimento não pode estar no futuro.';
+    }
+  }
+  if (d.contacto && !/^[0-9+\s()-]{7,20}$/.test(d.contacto)) {
+    return 'Contacto inválido. Usa só números, espaços e o sinal +.';
+  }
+  return null;
+}
+
 function tratarErro(err, res) {
   if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
     return res.status(409).json({ erro: 'Já existe um estudante com esse nº de processo ou BI.' });
@@ -43,10 +65,8 @@ exports.buscar = (req, res) => {
 
 exports.criar = (req, res) => {
   const dados = limpar(req.body);
-
-  if (!dados.nome || !dados.numero_processo) {
-    return res.status(400).json({ erro: 'Nome e nº de processo são obrigatórios.' });
-  }
+  const erro = validar(dados);
+  if (erro) return res.status(400).json({ erro });
 
   try {
     res.status(201).json(Estudante.criar(dados));
@@ -61,10 +81,8 @@ exports.atualizar = (req, res) => {
   }
 
   const dados = limpar(req.body);
-
-  if (!dados.nome || !dados.numero_processo) {
-    return res.status(400).json({ erro: 'Nome e nº de processo são obrigatórios.' });
-  }
+  const erro = validar(dados);
+  if (erro) return res.status(400).json({ erro });
 
   try {
     res.json(Estudante.atualizar(req.params.id, dados));
