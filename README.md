@@ -55,6 +55,10 @@ cd backend && npm run seed
 No menu lateral, "Cópia de segurança" descarrega uma cópia da base de dados.
 O ficheiro contém dados dos estudantes: guarda-o num local privado.
 
+## Credenciais do projecto
+Utilizador : professor
+Palavra-Passe : admin123
+
 ## Fases do desenvolvimento
 
 - fase-1: login e estudantes
